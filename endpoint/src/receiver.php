@@ -55,20 +55,20 @@
 
 $rootdir = "/var/www/html";
 
-log_msg("Info: called receiver.php");
-
 if (!isset($_SERVER['PHP_AUTH_USER'])) {
     repError("Error: no user logged in");
     return;
 }
 
 $action = 'test'; // 'test' or 'store'
-$site = explode("/", getcwd());
-if (count($site) > 2) {
-    $site = $site[count($site)-1];
+$site = $_SERVER['PHP_AUTH_USER']; // or $_SERVER['QUERY_STRING'] 
+
+if ($site){
+    $site = str_replace("/", "", $site); # sanitize
 } else {
-    return;
+    $site = "unspecified";
 }
+log_msg("Info: Using site: " . $site);
 
 if (isset($_POST['action'])) {
     $action = $_POST['action'];
