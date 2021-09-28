@@ -53,7 +53,7 @@
  *
  */
 
-$rootdir = "/var/www/html/applications/ipad-app";
+$rootdir = "/var/www/html";
 
 log_msg("Info: called receiver.php");
 
@@ -93,8 +93,7 @@ function repOk( $msg ) {
 }
 
 function log_msg( $msg ) {
-    global $rootdir;
-    $logFile = $rootdir.'/receiver_log.log';
+    $logFile = '/data/receiver.log';
     if (!is_file($logFile)) {
         file_put_contents($logFile, date(DATE_ATOM).": created file\n");
         if (!is_writable($logFile))
@@ -149,7 +148,7 @@ if ($action == 'test') {
 } elseif ($action == 'store') {
     log_msg("store called");
     if ($_FILES['upload']) {
-        $uploads_dir = $rootdir.'/d/'.$site;
+        $uploads_dir = '/data/'.$site;
         if (!is_dir($uploads_dir)) {
             if (!mkdir($uploads_dir, 0777, true)) {
                 repError( "Error: Failed to create site directory for storage" );
