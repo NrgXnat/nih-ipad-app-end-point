@@ -1,0 +1,14 @@
+  version: '3.7'
+  services:
+    app:
+      container_name: nih_toolbox
+      image: nih-toolbox:0.0.1
+      build:
+        context: ./endpoint
+        args:
+          PHP_VERSION: 8
+      ports:
+       - "8080:80"
+      volumes:
+        - ./data:/data
+        - ./passwords:/var/www/passwords
