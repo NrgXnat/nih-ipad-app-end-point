@@ -25,7 +25,7 @@
  *   echo "1,2,3,4" > test.csv
  *   curl --user <user name> -F "action=store" -F "upload=@test.csv" https://abcd-report.ucsd.edu/applications/ipad-app/d/sA/r.php
  *   Result: A single file is stored, json object with error=0 returned
- *  
+ *
  *   echo "1,2,3,4,5" > test2.csv
  *   curl --user <user name> -F "action=store" -F "upload[]=@test.csv" -F "upload[]=@test2.csv" https://abcd-report.ucsd.edu/applications/ipad-app/d/sA/r.php
  *   Result: Two files are stored on the server, json object with error=0 returned
@@ -120,11 +120,11 @@ function callPlugins($site, $filename, $event) {
     $list = array_filter($list, function($val) { return !is_dir($val); });
     sort($list);
     log_msg("call active plugins (".$event."): ".json_encode($list));
-    
+
     if (count($list) == 0) {
         return; // early exit if there are no plugins defined
     }
-    
+
     foreach ($list as $plugin) {
 
         $command = $plugin . " -s \"" . $site . "\" -i \"" . $filename . "\"";
@@ -177,7 +177,7 @@ if ($action == 'test') {
                         } catch (Exception $e) {
                             log_msg("PHP error in callPlugins");
                         }
-                  
+
                     } else {
                         repError( "Error: failed storing file $uploads_dir/$name" );
                     }
@@ -192,7 +192,7 @@ if ($action == 'test') {
             }
         } else { // if we only get a single file uploaded
             if ( $_FILES["upload"]["error"] == UPLOAD_ERR_OK ) {
-                $tmp_name = $_FILES["upload"]["tmp_name"]; 
+                $tmp_name = $_FILES["upload"]["tmp_name"];
                 $name = $_FILES["upload"]["name"];
                 // sanitize the name before using it
                 $name = mb_ereg_replace("([^\w\s\d\-_~,;:\[\]\(\).])", '', $name);
