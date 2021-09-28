@@ -12,60 +12,40 @@ The NIH Toolbox application (http://www.nihtoolbox.org) provides a large number 
 
 ## Setup on the server
 
-The server based code consists of a single php script. Make sure that your web-server supports php. The script can be set up in the following way to support multiple sites (siteA, siteB, siteC) collecting instrument with multiple iPad's for each site.
+The server based code consists of a single php script. You'll need docker and docker-compose set up.
 
-```
-/var/www/html/
-├── d
-│   ├── siteA
-│   │   └── r.php -> ../../receiver.php
-│   ├── siteB
-│   │   └── r.php -> ../../receiver.php
-│   └── siteC
-│       └── r.php -> ../../receiver.php
-├── README.md
-├── .htaccess
-└── receiver.php
-```
+#### Initial Setup
+```bash
+# build image
+docker-compose build
 
-One way to secure the data comming in from each site is to use basic authentication. Create an .htaccess file in the root of your project (here /var/www/html) with the following content:
+# create `data` folder into which
+# the apache process can write to (user 33)
+mkdir data && sudo chown -R 33:33 ./data
 
-```
-AuthType Basic
-AuthName "Restricted Files"
-AuthBasicProvider file
-AuthUserFile /var/www/passwords
-Require user admin
+# blank out the `passwords` file, so test account gets removed
+cp /dev/null ./passwords
 ```
 
-The above .htaccess file points to a passwords file (in a secure location) that contains a list of site user names and passwords. This file can be created using the htpasswd tool which is part of apache2:
+#### Starting the server:
+```bash
+docker-compose up -d
 ```
-htpasswd -c /var/www/passwords siteUserA
+It should now be available in http://localhost:8080/ .
+> :warning: Make sure to place this behind https reverse proxy to encrypt traffic, otherwise it will not be **HIPAA-compliant**.
+
+#### Creating a New Project/Site
+Multiple projects/sites are supported by creating a user/password combo specific to that site.
+To create a new site ("site_a"), just run this command, and type the password twice.
+```bash
+docker exec -it nih_toolbox htpasswd -B /var/www/passwords site_a
 ```
 
-In order to provide groups of users access to each individual site account the apache configuration file can use user groups. Here an example:
-```
-<Directory /var/www/html/applications/ipad-app/d/siteA>
-    AuthType Basic
-    AuthName intranet
-    AuthUserFile /var/www/passwords
-    AuthGroupFile /var/www/groups
-    Require group siteA
-    Order allow,deny
-    Satisfy any
-</Directory>				      
-```
-
-The /var/www/groups file lists group names (such as siteA) and user names. This way a single user can also have access to more than one site. Here an example on the content of /var/www/groups:
-```
-siteA: siteUserA
-```
-
-The above settings should allow you to configure a central data repository for your single or multi-site project.
+Data for this new project will be available in `./data/site_a`.
 
 ## Setup on the client
 
-The iPAD app has a field to enter the URL for your central data collection site together with the user name (siteUserA) and the password of that user. If the test connection works (test) you can upload the data to the server. All uploaded datasets appear inside the site directories /var/www/html/d/siteA/ and are labeled with the date and time of the upload. The content of each file is the collected data as a comma-separated table of values.
+The iPAD app has a field to enter the URL for your central data collection site together with the user name, which is the site name, and the password of that site. If the test connection works (test) you can upload the data to the server. All uploaded datasets appear inside the site directories "./data/site_a" and are labeled with the date and time of the upload. The content of each file is the collected data as a comma-separated table of values.
 
 ## Technical Notes
 
@@ -73,30 +53,30 @@ In order to test the server one can emulate the actions that the NIH Toolbox iPa
 
 ### Login
 ```
-curl -F "action=test" https://<your server>/d/siteA.php
+curl -F "action=test" https://<your server>
 ```
 Results in: Error HTML "Unauthorized"
 
 ```
-curl --user <user name> -F "action=test" https://<your server>/d/siteA/r.php
+curl --user "site_a" -F "action=test" https://<your server>
 ```
-Will asks for password for the given user, responds with  { "message": "ok" }
+Will asks for password for the given site, responds with  { "message": "ok" }
 
 ### Store files
 ```
-curl --user <user name> -F "action=store" https://<your server>/d/sA/r.php
+curl --user "site_a" -F "action=store" https://<your server>
 ```
 Result: Error json message: {"message":"Error: no files attached to upload"}
 
 ```
 echo "1,2,3,4" > test.csv
-curl --user <user name> -F "action=store" -F "upload=@test.csv" https://<your server>/d/sA/r.php
+curl --user "site_a" -F "action=store" -F "upload=@test.csv" https://<your server>
 ```
 Result: A single file is stored, json object with error=0 returned
 
-``` 
+```
 echo "1,2,3,4,5" > test2.csv
-curl --user <user name> -F "action=store" -F "upload[]=@test.csv" -F "upload[]=@test2.csv" https://<your server>/d/sA/r.php
+curl --user "site_a" -F "action=store" -F "upload[]=@test.csv" -F "upload[]=@test2.csv" https://<your server>
 ```
 Result: Two files are stored on the server, json object with error=0 returned
 
