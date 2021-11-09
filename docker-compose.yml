@@ -1,14 +1,21 @@
-  version: '3.7'
-  services:
-    app:
-      container_name: nih_toolbox
-      image: nih-toolbox:0.0.1
-      build:
-        context: ./endpoint
-        args:
-          PHP_VERSION: 8
-      ports:
-       - "8080:80"
-      volumes:
-        - ./data:/data
-        - ./passwords:/var/www/passwords
+---
+version: '3.6'
+services:
+  app:
+    container_name: nih_toolbox
+    image: ${TOOLBOX_IMAGE:-nih-toolbox:0.0.1}
+    build:
+      context: ./endpoint
+      args:
+        WWWDATA_UID: ${WWWDATA_UID:-33}
+        WWWDATA_GID: ${WWWDATA_GID:-33}
+        PHP_IMAGE: ${PHP_IMAGE:-php:8-apache}
+    ports:
+     - "8080:80"
+    logging:
+      driver: journald
+    restart: always
+    network_mode: bridge
+    volumes:
+      - ${DATA_PATH:-./data}:/data
+      - ./passwords:/var/www/passwords
